@@ -30,15 +30,40 @@ public class CxPathQuery
         return ans;
     }
 
+    public List<string> ToCxQL(Dictionary<string, Dictionary<string, string>> dt)
+    {
+        List<string> ans = new List<string>();
+        // TODO|FIXME - For now, ignore parent info
+        if (typeName != "*")
+        {
+            ans.Add($"result = result.FindByType<{typeName}>();");
+        }
+        if (member.Length> 0)
+        {
+            ans.Add($"result = result.{dt[typeName][member]};");
+        }
+        return ans;
+    }
+
 }
+
 
 public class CxPathParser
 {
-	public CxPathParser()
-	{
-	}
+    Dictionary<string, Dictionary<string, string>> paramDispatchTable;
 
-	public List<CxPathQuery> ParseQuery(string str)
+	public CxPathParser()
+    { 
+        // Hardcoded, can then be read from a JSON or something
+        paramDispatchTable = new Dictionary<string, Dictionary<string, string>>();
+        paramDispatchTable["IfStmt"] = new Dictionary<string, string>();
+        paramDispatchTable["IfStmt"]["condition"] = "CXSelectDomProperty<IfStmt>(x => x.Condition)";
+        paramDispatchTable["IfStmt"]["then"] = "CXSelectDomProperty<IfStmt>(x => x.TrueStatements)";
+        paramDispatchTable["IfStmt"]["else"] = "CXSelectDomProperty<IfStmt>(x => x.FalseStatements)";
+
+    }
+
+    public List<CxPathQuery> ParseQuery(string str)
     {
         Console.WriteLine($"Original Query: {str}");
         Regex component = new Regex(@"^(//?)([a-zA-Z*]+)((?:\.[a-z]+)?)((?:\[[^\]]+\])?)");
@@ -53,5 +78,15 @@ public class CxPathParser
             });
         }
         return queryList;
+    }
+
+    public string GenerateQuery(List<CxPathQuery> pathQueries)
+    {
+        List<string> result = new List<String>();
+        result.Add("result = All;");
+        foreach (CxPathQuery query in pathQueries) {
+            result.AddRange(query.ToCxQL(paramDispatchTable));
+        }
+        return string.Join("\n", result);
     }
 }
