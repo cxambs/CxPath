@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+// using Newtonsoft.Json;
 
 
 enum PathType
@@ -10,14 +10,15 @@ enum PathType
 
 public class CxPathCondition 
 {
-    private string _originalCondition;
+    private string _originalCondition, _typeName;
     public string LeftSide;
     public string RightSide;   
 
-    public CxPathCondition(string condition)
+    public CxPathCondition(string typeName, string condition)
     {
+        _typeName = typeName;
         _originalCondition = condition;
-        var matches = Regex.Matches(_originalCondition, @"([a-zA-Z_]+)\s*=\s*'([^']+)'");
+        var matches = Regex.Matches(_originalCondition, "(@?[.a-zA-Z_0-9]+)\\s*=\\s*(('|\")[^']+\\3)");
         if (matches.Count > 0){
             LeftSide = matches[0].Groups[1].Value;
             RightSide = matches[0].Groups[2].Value;
@@ -26,15 +27,23 @@ public class CxPathCondition
 
     public override string ToString()
     {
-        return $"{LeftSide}='{RightSide}'";
+        return $"{LeftSide}={RightSide}";
     }
 
     public String ToCxQL()
     {
-        if (LeftSide == "shortName")
+        if (LeftSide[0] == '@')
         {
-            return $"FindByShortName(\"{RightSide}\")";
+            if (LeftSide == "@shortName")
+            {
+                return $"FindByShortName({RightSide})";
+            }
         }
+        else
+        {
+            return $"FilterByDomProperty<{_typeName}>( obj => obj.{LeftSide} == {RightSide})";
+        }
+
         return "";
     }
 
@@ -59,7 +68,7 @@ public class CxPathQuery
     {
         if (condStr.Length > 0)
         {
-            conditions = Regex.Split(condStr, @"\s+and\+").Select(c => new CxPathCondition(c)).ToList();
+            conditions = Regex.Split(condStr, @"\s+and\+").Select(c => new CxPathCondition(typeName, c)).ToList();
         }
     }
 

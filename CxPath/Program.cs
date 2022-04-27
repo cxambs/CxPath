@@ -3,10 +3,11 @@ CxPathParser parser = new CxPathParser();
 
 string[] tests =
 {
-    "//IfStmt.condition//MethodInvokeExpr[shortName='foo']",
+    "//IfStmt.condition//MethodInvokeExpr[@shortName=\"foo\"]",
     "//AssignExpr.left",
     "//*.assigner",
-    "//*.assignee"
+    "//*.assignee",
+    "//CastExpr[TargetType.TypeName = \"NSString\"]"
 };
 
 foreach (string test in tests) {
