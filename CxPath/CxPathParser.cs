@@ -13,6 +13,8 @@ public class CxPathQuery
     string member;
     string conditions;
 
+    
+ 
     public CxPathQuery(params string[] components)
     {
         pathInfo = components[0] == "/" ? PathType.DirectChild : PathType.Descendant;
@@ -56,10 +58,19 @@ public class CxPathParser
     { 
         // Hardcoded, can then be read from a JSON or something
         paramDispatchTable = new Dictionary<string, Dictionary<string, string>>();
-        paramDispatchTable["IfStmt"] = new Dictionary<string, string>();
+        foreach (string key in "IfStmt AssignExpr *".Split(' '))
+        {
+            paramDispatchTable[key] = new Dictionary<string, string>();
+        }
+
         paramDispatchTable["IfStmt"]["condition"] = "CXSelectDomProperty<IfStmt>(x => x.Condition)";
         paramDispatchTable["IfStmt"]["then"] = "CXSelectDomProperty<IfStmt>(x => x.TrueStatements)";
         paramDispatchTable["IfStmt"]["else"] = "CXSelectDomProperty<IfStmt>(x => x.FalseStatements)";
+        
+        paramDispatchTable["AssignExpr"]["left"] = "CXSelectDomProperty<AssignExpr>(x => x.Left)";
+
+        paramDispatchTable["*"]["assigner"] = "GetAssigner()";
+
 
     }
 

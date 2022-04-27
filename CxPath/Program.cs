@@ -1,9 +1,17 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 CxPathParser parser = new CxPathParser();
-List<CxPathQuery> qList = parser.ParseQuery("//IfStmt.condition//InvokeMethodExpr[shortName='foo']");
-foreach (CxPathQuery q in qList)
+
+string[] tests =
 {
-    Console.WriteLine(q);
+    "//IfStmt.condition//MethodInvokeExpr[shortName='foo']",
+    "//AssignExpr.left",
+    "//*.assigner"
+};
+
+foreach (string test in tests) {
+    List<CxPathQuery> qList = parser.ParseQuery(test);
+    Console.WriteLine("Output:\n" + parser.GenerateQuery(qList));
+    Console.WriteLine();
 }
-Console.WriteLine(parser.GenerateQuery(qList));
+
