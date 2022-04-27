@@ -12,8 +12,6 @@ public class CxPathQuery
     string typeName;
     string member;
     string conditions;
-
-    
  
     public CxPathQuery(params string[] components)
     {
@@ -49,7 +47,6 @@ public class CxPathQuery
 
 }
 
-
 public class CxPathParser
 {
     Dictionary<string, Dictionary<string, string>> paramDispatchTable;
@@ -67,10 +64,11 @@ public class CxPathParser
         paramDispatchTable["IfStmt"]["then"] = "CXSelectDomProperty<IfStmt>(x => x.TrueStatements)";
         paramDispatchTable["IfStmt"]["else"] = "CXSelectDomProperty<IfStmt>(x => x.FalseStatements)";
         
-        paramDispatchTable["AssignExpr"]["left"] = "CXSelectDomProperty<AssignExpr>(x => x.Left)";
+        paramDispatchTable["AssignExpr"]["left"] = "CXSelectDomProperty<AssignExpr>(x => x.left)";
+        paramDispatchTable["AssignExpr"]["right"] = "CXSelectDomProperty<AssignExpr>(x => x.right)";
 
         paramDispatchTable["*"]["assigner"] = "GetAssigner()";
-
+        paramDispatchTable["*"]["assignee"] = "GetAssignee()";
 
     }
 
