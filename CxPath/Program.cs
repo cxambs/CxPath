@@ -8,7 +8,12 @@ string[] tests =
     "//*.assigner",
     "//*.assignee",
     "//CastExpr[TargetType.TypeName = \"NSString\"]",
-    "//MethodInvokeExpr/parent::IfStmt"
+    "//MethodInvokeExpr/parent::IfStmt",
+    "//*",
+    "//MethodInvokeExpression/parent::*",
+    "//MethodInvokeExpression/ancestor::IfStmt",
+    "//TypeRef[@linePragma = 3]",
+    "//*[@modifier=Private]"
 };
 
 foreach (string test in tests) {

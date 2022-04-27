@@ -18,7 +18,8 @@ public class CxPathCondition
     {
         _typeName = typeName;
         _originalCondition = condition;
-        var matches = Regex.Matches(_originalCondition, "(@?[.a-zA-Z_0-9]+)\\s*=\\s*(('|\")[^']+\\3)");
+        var matches = Regex.Matches(_originalCondition, "(@?[.a-zA-Z_0-9]+)\\s*=\\s*(\\S+)");
+
         if (matches.Count > 0){
             LeftSide = matches[0].Groups[1].Value;
             RightSide = matches[0].Groups[2].Value;
@@ -34,9 +35,16 @@ public class CxPathCondition
     {
         if (LeftSide[0] == '@')
         {
-            if (LeftSide == "@shortName")
+            switch (LeftSide)
             {
-                return $"FindByShortName({RightSide})";
+                case "@shortName":
+                    return $"FindByShortName({RightSide})";
+                case "@linePragma":
+                    return $"FindByPosition({RightSide})";
+                case "@modifier":
+                    return $"FindByFieldAttributes(Modifiers.{RightSide})";
+                default:
+                    return "";
             }
         }
         else
@@ -99,14 +107,26 @@ public class CxPathQuery
         // TODO|FIXME - For now, ignore parent info
         if (axis.Length > 0)
         {
-            if (axis == "parent")
+            switch (axis)
             {
-                ans.Add($"result = result.GetFathers();");
+                case "parent":
+                    ans.Add($"result = result.GetFathers();");
+                    if (typeName != "*")
+                    {
+                        ans.Add($"result = result.FindByType<{typeName}>();");
+                    }
+                    break;
+                case "ancestor":
+                    ans.Add($"result = result.GetAncOfType<{typeName}>();");
+                    break;
             }
         }
-        if (typeName != "*")
+        else
         {
-            ans.Add($"result = result.FindByType<{typeName}>();");
+            if (typeName != "*")
+            {
+                ans.Add($"result = result.FindByType<{typeName}>();");
+            }
         }
         if (conditions != null)
         {
