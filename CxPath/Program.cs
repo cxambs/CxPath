@@ -7,7 +7,8 @@ string[] tests =
     "//AssignExpr.left",
     "//*.assigner",
     "//*.assignee",
-    "//CastExpr[TargetType.TypeName = \"NSString\"]"
+    "//CastExpr[TargetType.TypeName = \"NSString\"]",
+    "//MethodInvokeExpr/parent::IfStmt"
 };
 
 foreach (string test in tests) {

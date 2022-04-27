@@ -54,12 +54,23 @@ public class CxPathQuery
     PathType pathInfo;
     string typeName;
     string member;
+    string axis;
     List<CxPathCondition> conditions;
 
     public CxPathQuery(params string[] components)
     {
         pathInfo = components[0] == "/" ? PathType.DirectChild : PathType.Descendant;
-        typeName = components[1];
+        if (components[1].Contains(":"))
+        {
+            var parts = components[1].Split("::");
+            axis = parts[0];
+            typeName = parts[1];
+        }
+        else
+        {
+            axis = "";
+            typeName = components[1];
+        }
         member = components[2].Length > 0 ? components[2].Substring(1) : "";
         ParseConditions(components[3].Length > 0 ? components[3].Substring(1, components[3].Length - 2) : "");
     }
@@ -86,6 +97,13 @@ public class CxPathQuery
     {
         List<string> ans = new List<string>();
         // TODO|FIXME - For now, ignore parent info
+        if (axis.Length > 0)
+        {
+            if (axis == "parent")
+            {
+                ans.Add($"result = result.GetFathers();");
+            }
+        }
         if (typeName != "*")
         {
             ans.Add($"result = result.FindByType<{typeName}>();");
@@ -135,7 +153,7 @@ public class CxPathParser
     public List<CxPathQuery> ParseQuery(string str)
     {
         Console.WriteLine($"Original Query: {str}");
-        Regex component = new Regex(@"^(//?)([a-zA-Z*]+)((?:\.[a-z]+)?)((?:\[[^\]]+\])?)");
+        Regex component = new Regex(@"^(//?)([:a-zA-Z*]+)((?:\.[a-z]+)?)((?:\[[^\]]+\])?)");
 
         List<CxPathQuery> queryList = new List<CxPathQuery>();
         while (component.Matches(str).Count > 0)
