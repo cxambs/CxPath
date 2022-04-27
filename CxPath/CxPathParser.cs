@@ -1,9 +1,43 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+
 
 enum PathType
 {
     DirectChild, Descendant
+}
+
+public class CxPathCondition 
+{
+    private string _originalCondition;
+    public string LeftSide;
+    public string RightSide;   
+
+    public CxPathCondition(string condition)
+    {
+        _originalCondition = condition;
+        var matches = Regex.Matches(_originalCondition, @"([a-zA-Z_]+)\s*=\s*'([^']+)'");
+        if (matches.Count > 0){
+            LeftSide = matches[0].Groups[1].Value;
+            RightSide = matches[0].Groups[2].Value;
+        }
+    }
+
+    public override string ToString()
+    {
+        return $"{LeftSide}='{RightSide}'";
+    }
+
+    public String ToCxQL()
+    {
+        if (LeftSide == "shortName")
+        {
+            return $"FindByShortName(\"{RightSide}\")";
+        }
+        return "";
+    }
+
 }
 
 public class CxPathQuery
@@ -11,7 +45,7 @@ public class CxPathQuery
     PathType pathInfo;
     string typeName;
     string member;
-    string conditions;
+    List<CxPathCondition> conditions;
 
     
  
@@ -20,15 +54,24 @@ public class CxPathQuery
         pathInfo = components[0] == "/" ? PathType.DirectChild : PathType.Descendant;
         typeName = components[1];
         member = components[2].Length > 0 ? components[2].Substring(1) : "";
-        conditions = components[3].Length > 0 ? components[3].Substring(1, components[3].Length - 2) : "";
+        ParseConditions(components[3].Length > 0 ? components[3].Substring(1, components[3].Length - 2) : "");
     }
+
+    internal void ParseConditions(string condStr)
+    {
+        if (condStr.Length > 0)
+        {
+            conditions = Regex.Split(condStr, @"\s+and\+").Select(c => new CxPathCondition(c)).ToList();
+        }
+    }
+
 
     public override string ToString()
     {
         string ans = pathInfo == PathType.DirectChild ? " / " : " // ";
         ans += $"<{typeName}>";
         ans += member.Length > 0 ? $".{member}" : "";
-        ans += conditions.Length > 0 ? $"[ {conditions} ]" : "";
+        ans += conditions.Count > 0 ? $"[ {string.Join(" and ", conditions.Select(x => x.ToString()))} ]" : "";
         return ans;
     }
 
@@ -39,6 +82,14 @@ public class CxPathQuery
         if (typeName != "*")
         {
             ans.Add($"result = result.FindByType<{typeName}>();");
+        }
+        if (conditions != null)
+        {
+            foreach (var c in conditions)
+            {
+                ans.Add($"result = result.{c.ToCxQL()};");
+            }
+
         }
         if (member.Length> 0)
         {
